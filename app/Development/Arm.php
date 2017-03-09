@@ -122,7 +122,7 @@ class Arm {
 					//print_r($results); die();
 					$results = array_diff($argsArray, $databaseArray);
 					//foreach($results as $val) echo $val."<br />";
-					$this->_ArmAlterTable($tablename, $results);
+					//$this->_ArmAlterTable($tablename, $results);
 				}
 			} else {
 				$this->_ArmCreateNewTable($this->_tablesArray[$key]);
