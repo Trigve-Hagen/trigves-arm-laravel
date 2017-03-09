@@ -34,7 +34,7 @@ class Arm {
 	
 	private function _ArmCreateNewTable($rowArray) { // do a created_at
 		$queryString = "CREATE TABLE IF NOT EXISTS ".$rowArray['tablename']."(";
-		if(isset($rowArray['id'])) $rowArray['id']." INT NOT NULL AUTO_INCREMENT, ";
+		if(isset($rowArray['id'])) $queryString .= $rowArray['id']." INT NOT NULL AUTO_INCREMENT, ";
 		if(isset($rowArray['created_at'])) $queryString .= $rowArray['created_at']." TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ";
 		if(isset($rowArray['updated_at'])) $queryString .= $rowArray['updated_at']." TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, ";
 		$rowcount = count($rowArray); $count = 1; 
