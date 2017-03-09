@@ -1,14 +1,31 @@
 <?php
+namespace App\Development;
+
+use App\Providers\ArmServiceProvider;
+use Illuminate\Support\ServiceProvider;
 
 class Arm {
-	private $_db_host;
-	private $_db_name;
-	private $_db_user;
-	private $_db_pass;
+	private $_db_host, $_db_name, $_db_user, $_db_pass;
+	private $tableMap = array();
 	
+	public function __construct() {
+		$this->_db_host = env('DB_HOST');
+		$this->_db_name = env('DB_DATABASE');
+		$this->_db_user = env('DB_USERNAME');
+		$this->_db_pass = env('DB_PASSWORD');
+	}
+	
+	/*
+	*
+	* The first three fields after tablename are optional. They are
+	* id INT NOT NULL AUTO_INCREMENT - 'id'=>'userid_c3po007r2d2'
+	* create_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP - 'created_at'=>'createdat_c3po007r2d2'
+	* and updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP - 'updated_at'=>'updatedat_c3po007r2d2'
+	* You can name the sections separated by the underscore anything - blogid_45g234y5g5y or createad_rewquy3o45ouy
+	*
+	*/
 	private $_tablesArray = array(
-		'users' => array('tablename'=>'users_table', 'id'=>'usersid_field', 'name'=>'name_field_VARCHAR_255', 'cell'=>'cell_field_VARCHAR_255', 'email'=>'email_field_VARCHAR_255', 'username'=>'username_field_VARCHAR_255', 'password'=>'password_field_VARCHAR_255'),
-		'blog' => array('tablename'=>'blog_table', 'id'=>'blogid_field', 'name'=>'date_field_VARCHAR_255', 'userid'=>'userid_field_VARCHAR_255', 'title'=>'title_field_VARCHAR_255', 'post'=>'post_field_VARCHAR_255')
+		'users' => array('tablename'=>'users_c3po007r2d2', 'id'=>'userid_c3po007r2d2', 'created_at'=>'createdat_c3po007r2d2', 'updated_at'=>'updatedat_c3po007r2d2', 'name'=>'name_c3po007r2d2_VARCHAR_255', 'cell'=>'cell_c3po007r2d2_VARCHAR_255', 'email'=>'email_c3po007r2d2_VARCHAR_255', 'username'=>'username_c3po007r2d2_VARCHAR_255', 'password'=>'password_c3po007r2d2_VARCHAR_255')
 	);
 	
 	private function _Connect() {
@@ -16,15 +33,22 @@ class Arm {
 	}
 	
 	private function _ArmCreateNewTable($rowArray) { // do a created_at
-		$queryString = "CREATE TABLE IF NOT EXISTS ".$rowArray['tablename']."(".$rowArray['id']." INT NOT NULL AUTO_INCREMENT, ";
+		$queryString = "CREATE TABLE IF NOT EXISTS ".$rowArray['tablename']."(";
+		if(isset($rowArray['id'])) $rowArray['id']." INT NOT NULL AUTO_INCREMENT, ";
+		if(isset($rowArray['created_at'])) $queryString .= $rowArray['created_at']." TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ";
+		if(isset($rowArray['updated_at'])) $queryString .= $rowArray['updated_at']." TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, ";
+		$rowcount = count($rowArray); $count = 1; 
 		foreach($rowArray as $key => $value) {
-			if($key == "id" || $key == "tablename") {  } else {
+			if($key == "id" || $key == "tablename" || $key == "created_at" || $key == "updated_at") {  } else {
 				$args = explode("_", $value);
 				if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
-				$queryString .= $value . " " . $args[2] . $chars . ", ";
-			}			
+				if($count == $rowcount) $queryString .= $value . " " . $args[2] . $chars;
+				else $queryString .= $value . " " . $args[2] . $chars . ", ";
+			}
+			$count++;			
 		}
-		$queryString .= "PRIMARY KEY (".$rowArray['id']."))";
+		if(isset($rowArray['id'])) $queryString .= "PRIMARY KEY (".$rowArray['id']."))";
+		else $queryString .= ")";
 		//echo $queryString . "<br />";
 		$mysqli = $this->_Connect();
 		$query = mysqli_query($mysqli, $queryString);
@@ -81,7 +105,7 @@ class Arm {
 		return $ifempty;
 	}
 	
-	public function _ArmCheckTables() {
+	public function ArmCheckTables() {
 		foreach($this->_tablesArray as $key => $value) {
 			if($this->_TableExists($this->_tablesArray[$key]['tablename'])) {
 				$tablename = $this->_tablesArray[$key]['tablename'];
@@ -95,7 +119,7 @@ class Arm {
 						if($key == "tablename") { }
 						else array_push($argsArray, $value);
 					}
-					print_r($results); die();
+					//print_r($results); die();
 					$results = array_diff($argsArray, $databaseArray);
 					//foreach($results as $val) echo $val."<br />";
 					$this->_ArmAlterTable($tablename, $results);
@@ -106,7 +130,7 @@ class Arm {
 		}
 	}
 	
-	public function _BackUpToSql() { // escape commas as not to mess up sql statements
+	private function _BackUpToSql() { // escape commas as not to mess up sql statements
 		if(file_exists('backup.sql')) unlink('backup.sql');
 		foreach($this->_tablesArray as $key => $value) {
 			if($this->_TableExists($this->_tablesArray[$key]['tablename'])) {
@@ -133,7 +157,7 @@ class Arm {
 		}
 	}
 	
-	public function _InsertDataFromSql() {
+	private function _InsertDataFromSql() {
 		if(file_exists("backup.sql")) {
 			$handle = fopen("backup.sql", "r");
 			if($handle) {
