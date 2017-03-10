@@ -15,24 +15,29 @@ class Arm {
 		$this->_db_pass = env('DB_PASSWORD');
 	}
 	
-	/*
-	*
-	* The first three fields after tablename are optional. They are
-	* id INT NOT NULL AUTO_INCREMENT - 'id'=>'userid_c3po007r2d2'
+	/* Not so hot at comments - Fair thee well - 
+	* tablename and id INT NOT NULL AUTO_INCREMENT are manditory unless you want to adjust it
+	* You can name the sections separated by the underscore anything - 'id'=>'blogid_45g234y5g5y' or 'id'=>'userid_rewquy3o45ouy'
+	* The next two fields after tablename and id are optional. They are
 	* create_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP - 'created_at'=>'createdat_c3po007r2d2'
 	* and updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP - 'updated_at'=>'updatedat_c3po007r2d2'
-	* You can name the sections separated by the underscore anything - blogid_45g234y5g5y or createad_rewquy3o45ouy
-	*
+	* ids don't have INT or characters on the end and niether do created_at or updated_at. They are created individually.
+	* If you want a TEXT assign it TEXT with no characters - metta_c3po007r2d2_TEXT
+	* Others must have a number of characters assigned like this rate_c3po007r2d2_VARCHAR_255 - 4 section divided by underscores
+	* You can update multiple rows in a table and make several databases at a time and combine the two
+	* You can add rows anywhere you want after updated_at. Will work on improvements to that soon. For now if you are unsure
+	* build your database with create_at and updated_at in place. create_at keeps first insert. updated_at updates when updated.
 	*/
 	private $_tablesArray = array(
-		'users' => array('tablename'=>'users_c3po007r2d2', 'id'=>'userid_c3po007r2d2', 'created_at'=>'createdat_c3po007r2d2', 'updated_at'=>'updatedat_c3po007r2d2', 'name'=>'name_c3po007r2d2_VARCHAR_255', 'cell'=>'cell_c3po007r2d2_VARCHAR_255', 'email'=>'email_c3po007r2d2_VARCHAR_255', 'username'=>'username_c3po007r2d2_VARCHAR_255', 'password'=>'password_c3po007r2d2_VARCHAR_255')
+		'users' => array('tablename'=>'users_c3po007r2d2', 'id'=>'userid_c3po007r2d2', 'created_at'=>'createdat_c3po007r2d2', 'name'=>'name_c3po007r2d2_VARCHAR_255', 'phone'=>'phone_c3po007r2d2_VARCHAR_255', 'cell'=>'cell_c3po007r2d2_VARCHAR_255', 'email'=>'email_c3po007r2d2_VARCHAR_255', 'username'=>'username_c3po007r2d2_VARCHAR_255', 'password'=>'password_c3po007r2d2_VARCHAR_255', 'text'=>'text_c3po007r2d2_TEXT', 'time'=>'time_c3po007r2d2_INT_255', 'address'=>'address_c3po007r2d2_INT_255', 'rate'=>'rate_c3po007r2d2_VARCHAR_255', 'metta'=>'metta_c3po007r2d2_TEXT', 'phone2'=>'phone2_c3po007r2d2_VARCHAR_255'),
+		'posts' => array('tablename'=>'posts_posts07rsecret2d2', 'id'=>'postid_posts07rsecret2d2', 'created_at'=>'created_posts07rsecret2d2', 'updated_at'=>'updated_posts07rsecret2d2', 'userid'=>'userid_related2Cusers2Cid_INT_255', 'posttitle'=>'title_posts07rsecret2d2_VARCHAR_255', 'postbody'=>'post_posts07rsecret2d2_VARCHAR_255')
 	);
 	
 	private function _Connect() {
 		return mysqli_connect($this->_db_host, $this->_db_user, $this->_db_pass, $this->_db_name);
 	}
 	
-	private function _ArmCreateNewTable($rowArray) { // do a created_at
+	private function _ArmCreateNewTable($rowArray) {
 		$queryString = "CREATE TABLE IF NOT EXISTS ".$rowArray['tablename']."(";
 		if(isset($rowArray['id'])) $queryString .= $rowArray['id']." INT NOT NULL AUTO_INCREMENT, ";
 		if(isset($rowArray['created_at'])) $queryString .= $rowArray['created_at']." TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ";
@@ -42,34 +47,12 @@ class Arm {
 			if($key == "id" || $key == "tablename" || $key == "created_at" || $key == "updated_at") {  } else {
 				$args = explode("_", $value);
 				if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
-				if($count == $rowcount) $queryString .= $value . " " . $args[2] . $chars;
-				else $queryString .= $value . " " . $args[2] . $chars . ", ";
-			}
-			$count++;			
+				$queryString .= $value . " " . $args[2] . $chars . ", ";
+			} $count++;			
 		}
-		if(isset($rowArray['id'])) $queryString .= "PRIMARY KEY (".$rowArray['id']."))";
-		else $queryString .= ")";
+		if(isset($rowArray['id'])) $queryString .= "PRIMARY KEY (".$rowArray['id']."))"; else $queryString .= ")";
 		//echo $queryString . "<br />";
-		$mysqli = $this->_Connect();
-		$query = mysqli_query($mysqli, $queryString);
-	}
-	
-	// name . VARCHAR/TEXT/INT . 255
-	private function _ArmAlterTable($tablename, $rowArray) { // add for inserting rows in between other rows
-		$count = 0; $queryString = "ALTER TABLE ".$tablename." ADD (";
-		foreach($rowArray as $row) {
-			$args = explode("_", $row);
-			if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
-			if($args[2] == "TEXT") $queryString .= $row." ".$args[2]." ".$chars;
-			else {
-				if($count == count($rowArray)-1) $queryString .= $row." ".$args[2]." ".$chars.")";
-				else $queryString .= $row." ".$args[2]." ".$chars.", ";
-			}
-			$count++;
-		}
-		//echo $queryString;
-		$mysqli = $this->_Connect();
-		$query = mysqli_query($mysqli, $queryString); 
+		$mysqli = $this->_Connect(); $query = mysqli_query($mysqli, $queryString);
 	}
 	
 	private function _TableExists($table) {
@@ -81,18 +64,15 @@ class Arm {
 	private function _GetListOfDatabases($key) {
 		$mysqli = $this->_Connect(); $argsArray = array();
 		$query = mysqli_query($mysqli, "DESCRIBE ".$this->_tablesArray[$key]['tablename']);
-		while ($line = mysqli_fetch_array($query)) {
-			array_push($argsArray, htmlentities($line['Field']));
-		}
+		while ($line = mysqli_fetch_array($query)) array_push($argsArray, htmlentities($line['Field']));
 		return $argsArray;
 	}
 	
-	// to set TEXT fields searchable in LIKE %search%
+	// to set TEXT fields searchable in LIKE %search% on 1and1 hosting......might not be needed on localhost.
 	private function _CreateCIMettaFields() {
 		$mysqli = $this->_Connect();
-		$query = mysqli_query($mysqli, "ALTER TABLE ".$this->_tablesArray['login']['tablename']." MODIFY COLUMN ".$this->_tablesArray['login']['metta']." TEXT CHARACTER SET UTF8 COLLATE UTF8_GENERAL_CI");
-		$query = mysqli_query($mysqli, "ALTER TABLE ".$this->_tablesArray['blog']['tablename']." MODIFY COLUMN ".$this->_tablesArray['blog']['metta']." TEXT CHARACTER SET UTF8 COLLATE UTF8_GENERAL_CI");
-		$query = mysqli_query($mysqli, "ALTER TABLE ".$this->_tablesArray['products']['tablename']." MODIFY COLUMN ".$this->_tablesArray['products']['metta']." TEXT CHARACTER SET UTF8 COLLATE UTF8_GENERAL_CI");
+		$query = mysqli_query($mysqli, "ALTER TABLE ".$this->_tablesArray['users']['tablename']." MODIFY COLUMN ".$this->_tablesArray['users']['text']." TEXT CHARACTER SET UTF8 COLLATE UTF8_GENERAL_CI");
+		$query = mysqli_query($mysqli, "ALTER TABLE ".$this->_tablesArray['users']['tablename']." MODIFY COLUMN ".$this->_tablesArray['users']['metta']." TEXT CHARACTER SET UTF8 COLLATE UTF8_GENERAL_CI");
 		mysqli_close($mysqli);
 	}
 	
@@ -105,6 +85,32 @@ class Arm {
 		return $ifempty;
 	}
 	
+	private function _ResolveDifference($key, $ifmore) {
+		if($ifmore == 1) { 
+			$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
+			foreach($this->_tablesArray[$key] as $row => $value) if($row == "tablename") { } else array_push($argsArray, $value);
+			$results = array_diff($argsArray, $databaseArray); $queryString = '';
+			foreach($results as $idx => $element) {
+				$args = explode("_", $element);
+				if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
+				$queryString = "ALTER TABLE ".$this->_tablesArray[$key]['tablename']." ADD ".$element." ".$args[2].$chars." AFTER ".$databaseArray[$idx-1]; $mysqli = $this->_Connect();
+				$query = mysqli_query($mysqli, $queryString);  mysqli_close($mysqli);
+			}
+		} else {
+			$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
+			foreach($this->_tablesArray[$key] as $row => $value) if($row == "tablename") { } else array_push($argsArray, $value);
+			$results = array_diff($databaseArray, $argsArray);
+			foreach($results as $idx => $element) {
+				$args = explode("_", $element);
+				if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
+				$queryString = "ALTER TABLE ".$this->_tablesArray[$key]['tablename']." DROP ".$element;
+				$mysqli = $this->_Connect();
+				$query = mysqli_query($mysqli, $queryString);  mysqli_close($mysqli);
+			}
+		}
+		//echo '<pre>'; print_r($databaseArray); print_r($results); echo '</pre>';
+	}
+	
 	public function ArmCheckTables() {
 		foreach($this->_tablesArray as $key => $value) {
 			if($this->_TableExists($this->_tablesArray[$key]['tablename'])) {
@@ -112,20 +118,12 @@ class Arm {
 				$mysqli = $this->_Connect();
 				$query = mysqli_query($mysqli, "SELECT * FROM ".$this->_tablesArray[$key]['tablename']);
 				$numFields = mysqli_num_fields($query);
-				if($numFields < count($this->_tablesArray[$key])-1) {
-					// create a result list from the db and compare one by one till you find the new ones 
-					$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
-					foreach($this->_tablesArray[$key] as $key => $value) {
-						if($key == "tablename") { }
-						else array_push($argsArray, $value);
-					}
-					//print_r($results); die();
-					$results = array_diff($argsArray, $databaseArray);
-					//foreach($results as $val) echo $val."<br />";
-					//$this->_ArmAlterTable($tablename, $results);
-				}
+				if($numFields < count($this->_tablesArray[$key])-1) $string = $this->_ResolveDifference($key, 1);
+				if($numFields > count($this->_tablesArray[$key])-1) $string = $this->_ResolveDifference($key, 0);
+				if(isset($string)) $this->_ArmAlterTable($tablename, $string);
 			} else {
 				$this->_ArmCreateNewTable($this->_tablesArray[$key]);
+				//$this->_CreateCIMettaFields();
 			}
 		}
 	}
