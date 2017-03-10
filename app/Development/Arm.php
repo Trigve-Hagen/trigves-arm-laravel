@@ -165,45 +165,6 @@ class Arm {
 			//echo '<pre>'; print_r($dbArgs); print_r($arrayArgs); print_r($results); echo '</pre>';
 		}
 	}
-	
-	private function _BackUpToSql() { // escape commas as not to mess up sql statements
-		if(file_exists('backup.sql')) unlink('backup.sql');
-		foreach($this->_tablesArray as $key => $value) {
-			if($this->_TableExists($this->_tablesArray[$key]['tablename'])) {
-				$mysqli = $this->_Connect();
-				$query = mysqli_query($mysqli, "SELECT * FROM ".$this->_tablesArray[$key]['tablename']);
-				while ($line = mysqli_fetch_array($query)) {
-					$dbrowcount = 1;
-					$string = 'INSERT INTO '.$this->_tablesArray[$key]['tablename'].' VALUES(';
-					foreach( $value as $key1 => $value1 ) {
-						if($key1 != 'tablename') {
-							$value = $line[$this->_tablesArray[$key][$key1]];
-							if(preg_match("/,/", $value)) $escaped_value = str_replace(',', '%-2-C-;', $value);
-							if($dbrowcount == count($value)-1) $string .= "'".$escaped_value."'";
-							else $string .= "'".$escaped_value."', ";
-							$dbrowcount++;
-						}
-					}
-					$string .= ");" . PHP_EOL;
-					$handle = fopen('backup.sql', 'ab');
-					fwrite($handle,$string,strlen($string));
-					fclose($handle);
-				}
-			}
-		}
-	}
-	
-	private function _InsertDataFromSql() {
-		if(file_exists("backup.sql")) {
-			$handle = fopen("backup.sql", "r");
-			if($handle) {
-				$mysqli = $this->_Connect();
-				while(($line = fgets($handle)) !== false) $query = mysqli_query($mysqli, $line);
-				mysqli_close($mysqli);
-				fclose($handle);
-			}
-		}
-	}
 }
 
 ?>
