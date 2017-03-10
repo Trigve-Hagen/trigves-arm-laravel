@@ -9,3 +9,8 @@ INSTALLATION
 3) Place 'App\Providers\ArmServiceProvider::class,' in the providers array in config/app  
 4) Add App::make('App\Development\Arm')->ArmCheckTables(); in the routes/web.php about all routes.  
 5) Create the table in phpmyadmin and fill in your .env variables.
+
+
+3/10/2017 - updates  
+* added support for adding multiple rows in a table that are next to each other.  
+* added support for droping unneeded tables - just erase them from the array.  

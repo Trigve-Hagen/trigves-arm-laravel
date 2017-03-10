@@ -27,10 +27,14 @@ class Arm {
 	* You can update multiple rows in a table and make several databases at a time and combine the two
 	* You can add rows anywhere you want after updated_at. Will work on improvements to that soon. For now if you are unsure
 	* build your database with create_at and updated_at in place. create_at keeps first insert. updated_at updates when updated.
+	* added support for adding multiple rows in a table that are next to each other
+	* added support for droping unneeded tables - just erase them from the array.
 	*/
 	private $_tablesArray = array(
-		'users' => array('tablename'=>'users_c3po007r2d2', 'id'=>'userid_c3po007r2d2', 'created_at'=>'createdat_c3po007r2d2', 'name'=>'name_c3po007r2d2_VARCHAR_255', 'phone'=>'phone_c3po007r2d2_VARCHAR_255', 'cell'=>'cell_c3po007r2d2_VARCHAR_255', 'email'=>'email_c3po007r2d2_VARCHAR_255', 'username'=>'username_c3po007r2d2_VARCHAR_255', 'password'=>'password_c3po007r2d2_VARCHAR_255', 'text'=>'text_c3po007r2d2_TEXT', 'time'=>'time_c3po007r2d2_INT_255', 'address'=>'address_c3po007r2d2_INT_255', 'rate'=>'rate_c3po007r2d2_VARCHAR_255', 'metta'=>'metta_c3po007r2d2_TEXT', 'phone2'=>'phone2_c3po007r2d2_VARCHAR_255'),
-		'posts' => array('tablename'=>'posts_posts07rsecret2d2', 'id'=>'postid_posts07rsecret2d2', 'created_at'=>'created_posts07rsecret2d2', 'updated_at'=>'updated_posts07rsecret2d2', 'userid'=>'userid_related2Cusers2Cid_INT_255', 'posttitle'=>'title_posts07rsecret2d2_VARCHAR_255', 'postbody'=>'post_posts07rsecret2d2_VARCHAR_255')
+		'users' => array('tablename'=>'users_c3po007r2d2', 'id'=>'userid_c3po007r2d2', 'created_at'=>'createdat_c3po007r2d2', 'name'=>'name_c3po007r2d2_VARCHAR_255', 'phone'=>'phone_c3po007r2d2_VARCHAR_255', 'cell'=>'cell_c3po007r2d2_VARCHAR_255', 'email'=>'email_c3po007r2d2_VARCHAR_255', 'username'=>'username_c3po007r2d2_VARCHAR_255', 'password'=>'password_c3po007r2d2_VARCHAR_255', 'text'=>'text_c3po007r2d2_TEXT', 'time'=>'time_c3po007r2d2_INT_255', 'ifplace'=>'ifplace_related2Cusers2Cid_INT_255', 'ifpark'=>'ifpark_related2Cusers2Cid_INT_255', 'address'=>'address_c3po007r2d2_INT_255', 'rate'=>'rate_c3po007r2d2_VARCHAR_255', 'metta'=>'metta_c3po007r2d2_TEXT', 'phone2'=>'phone2_c3po007r2d2_VARCHAR_255', 'phone3'=>'phone3_c3po007r2d2_VARCHAR_255'),
+		'posts' => array('tablename'=>'posts_posts07rsecret2d2', 'id'=>'postid_posts07rsecret2d2', 'created_at'=>'created_posts07rsecret2d2', 'updated_at'=>'updated_posts07rsecret2d2', 'userid'=>'userid_related2Cusers2Cid_INT_255', 'posttitle'=>'title_posts07rsecret2d2_VARCHAR_255', 'postbody'=>'post_posts07rsecret2d2_VARCHAR_255', 'phone2'=>'phone2_c3po007r2d2_VARCHAR_255', 'phone3'=>'phone3_c3po007r2d2_VARCHAR_255'),
+		'comments' => array('tablename'=>'comments_posts07rsecret2d2', 'id'=>'commentid_posts07rsecret2d2', 'created_at'=>'created_posts07rsecret2d2', 'updated_at'=>'updated_posts07rsecret2d2', 'userid'=>'userid_related2Cusers2Cid_INT_255', 'postid'=>'postid_related2Cusers2Cid_INT_255', 'comment'=>'comment_posts07rsecret2d2_VARCHAR_255'),
+		'apis' => array('tablename'=>'apis_posts07rsecret2d2', 'id'=>'apiid_posts07rsecret2d2', 'created_at'=>'created_posts07rsecret2d2', 'updated_at'=>'updated_posts07rsecret2d2', 'userid'=>'userid_related2Cusers2Cid_INT_255', 'postid'=>'postid_related2Cusers2Cid_INT_255', 'commentname'=>'commaentname_related2Cusers2Cid_INT_255', 'ifpark'=>'ifpark_related2Cusers2Cid_INT_255')
 	);
 	
 	private function _Connect() {
@@ -60,6 +64,20 @@ class Arm {
 		$result = mysqli_query($mysqli, "select 1 from `" . $table . "` LIMIT 1");
 		if($result) return true; else return false;
 	}
+	
+	// SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'
+	private function _GetListOfTablesDatabase() {
+		$mysqli = $this->_Connect(); $argsArray = array();
+		$query = mysqli_query($mysqli, "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'");
+		while ($line = mysqli_fetch_array($query)) if($line[1] == $this->_db_name) array_push($argsArray, htmlentities($line['TABLE_NAME']));
+		return $argsArray;
+	}
+	
+	private function _GetListOfTablesArm() {
+		$argsArray = array();
+		foreach($this->_tablesArray as $table => $rows) array_push($argsArray, $rows['tablename']);
+		sort($argsArray); return $argsArray;
+	}
 
 	private function _GetListOfDatabases($key) {
 		$mysqli = $this->_Connect(); $argsArray = array();
@@ -88,13 +106,20 @@ class Arm {
 	private function _ResolveDifference($key, $ifmore) {
 		if($ifmore == 1) { 
 			$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
-			foreach($this->_tablesArray[$key] as $row => $value) if($row == "tablename") { } else array_push($argsArray, $value);
+			foreach($this->_tablesArray[$key] as $row => $value) if(!$row == "tablename") array_push($argsArray, $value);
 			$results = array_diff($argsArray, $databaseArray); $queryString = '';
+			//echo count($results)."<br />";
+			//echo '<pre>'; print_r($databaseArray); print_r($results); echo '</pre>';
 			foreach($results as $idx => $element) {
 				$args = explode("_", $element);
 				if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
 				$queryString = "ALTER TABLE ".$this->_tablesArray[$key]['tablename']." ADD ".$element." ".$args[2].$chars." AFTER ".$databaseArray[$idx-1]; $mysqli = $this->_Connect();
 				$query = mysqli_query($mysqli, $queryString);  mysqli_close($mysqli);
+				if(count($results) > 1) {
+					$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
+					foreach($this->_tablesArray[$key] as $row => $value) if($row == "tablename") { } else array_push($argsArray, $value);
+					$results = array_diff($argsArray, $databaseArray); $queryString = '';
+				}
 			}
 		} else {
 			$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
@@ -108,22 +133,33 @@ class Arm {
 				$query = mysqli_query($mysqli, $queryString);  mysqli_close($mysqli);
 			}
 		}
-		//echo '<pre>'; print_r($databaseArray); print_r($results); echo '</pre>';
+		
 	}
 	
 	public function ArmCheckTables() {
-		foreach($this->_tablesArray as $key => $value) {
-			if($this->_TableExists($this->_tablesArray[$key]['tablename'])) {
-				$tablename = $this->_tablesArray[$key]['tablename'];
+		$dbArgs = $this->_GetListOfTablesDatabase();
+		$arrayArgs = $this->_GetListOfTablesArm();
+		if(count($dbArgs) > count($arrayArgs)) {
+			$results = array_diff($dbArgs, $arrayArgs);
+			foreach($results as $table) {
 				$mysqli = $this->_Connect();
-				$query = mysqli_query($mysqli, "SELECT * FROM ".$this->_tablesArray[$key]['tablename']);
-				$numFields = mysqli_num_fields($query);
-				if($numFields < count($this->_tablesArray[$key])-1) $string = $this->_ResolveDifference($key, 1);
-				if($numFields > count($this->_tablesArray[$key])-1) $string = $this->_ResolveDifference($key, 0);
-				if(isset($string)) $this->_ArmAlterTable($tablename, $string);
-			} else {
-				$this->_ArmCreateNewTable($this->_tablesArray[$key]);
-				//$this->_CreateCIMettaFields();
+				$query = mysqli_query($mysqli, "DROP TABLE IF EXISTS ".$table);  mysqli_close($mysqli);
+			}
+			//echo '<pre>'; print_r($dbArgs); print_r($arrayArgs); print_r($results); echo '</pre>';
+		} else {
+			foreach($this->_tablesArray as $key => $value) {
+				if($this->_TableExists($this->_tablesArray[$key]['tablename'])) {
+					$tablename = $this->_tablesArray[$key]['tablename'];
+					$mysqli = $this->_Connect();
+					$query = mysqli_query($mysqli, "SELECT * FROM ".$this->_tablesArray[$key]['tablename']);
+					$numFields = mysqli_num_fields($query);
+					if($numFields < count($this->_tablesArray[$key])-1) $string = $this->_ResolveDifference($key, 1);
+					if($numFields > count($this->_tablesArray[$key])-1) $string = $this->_ResolveDifference($key, 0);
+					if(isset($string)) $this->_ArmAlterTable($tablename, $string);
+				} else {
+					$this->_ArmCreateNewTable($this->_tablesArray[$key]);
+					//$this->_CreateCIMettaFields();
+				}
 			}
 		}
 	}
