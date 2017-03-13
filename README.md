@@ -22,4 +22,5 @@ INSTALLATION
 * added support for droping unneeded tables - just erase them from the array.  
 
 3/13/2017 - updates  
-* added support for changing row names
+* added support for changing row names  
+* added error reporting

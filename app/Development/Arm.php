@@ -15,7 +15,7 @@ class Arm {
 		$this->_db_pass = env('DB_PASSWORD');
 	}
 	
-	/* Not so hot at comments - Fair thee well - 
+	/*
 	* tablename and id INT NOT NULL AUTO_INCREMENT are manditory unless you want to adjust it
 	* You can name the sections separated by the underscore anything - 'id'=>'blogid_45g234y5g5y' or 'id'=>'userid_rewquy3o45ouy'
 	* The next two fields after tablename and id are optional. They are
@@ -31,6 +31,8 @@ class Arm {
 	* added support for droping unneeded tables - just erase them from the array.
 	* For a ton of changes(erase two tables, add three rows to each table while erasing four rows in each table, create another table)
 	* you may have to refresh twice, but it beats going back and forth.
+	* added support for renaming rows
+	* added error reporting
 	*/
 	private $_tablesArray = array(
 		'users' => array('tablename'=>'users_c3po007r2d2', 'id'=>'userid_c3po007r2d2', 'created_at'=>'createdat_c3po007r2d2', 'name'=>'name_c3po007r2d2_VARCHAR_255', 'phone'=>'phone_c3po007r2d2_VARCHAR_255', 'username'=>'username_c3po007r2d2_VARCHAR_255', 'email'=>'email_c3po007r2d2_VARCHAR_255', 'username'=>'username_c3po007r2d2_VARCHAR_255', 'password'=>'password_c3po007r2d2_VARCHAR_255'),
@@ -57,7 +59,9 @@ class Arm {
 		}
 		if(isset($rowArray['id'])) $queryString .= "PRIMARY KEY (".$rowArray['id']."))"; else $queryString .= ")";
 		//echo $queryString . "<br />";
-		$mysqli = $this->_Connect(); $query = mysqli_query($mysqli, $queryString);
+		$mysqli = $this->_Connect(); $query = mysqli_query($mysqli, $queryString); mysqli_close($mysqli);
+		if($query) echo '<p style="margin-top:50px;text-align:center;color:#006600;">The table '.$rowArray['tablename'].' has been added successfully!</p>';
+		else echo '<p style="margin-top:50px;text-align:center;color:#660000;">There has been an error adding '.$rowArray['tablename'].'.</p>';
 	}
 	
 	private function _TableExists($table) {
@@ -114,7 +118,10 @@ class Arm {
 				$args = explode("_", $element);
 				if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
 				$queryString = "ALTER TABLE ".$this->_tablesArray[$key]['tablename']." ADD ".$element." ".$args[2].$chars." AFTER ".$databaseArray[$idx-1]; $mysqli = $this->_Connect();
-				$query = mysqli_query($mysqli, $queryString);  mysqli_close($mysqli);
+				$query = mysqli_query($mysqli, $queryString);
+				if($query) echo '<p style="margin-top:50px;text-align:center;color:#006600;">The row '.$element.' has been added successfully!</p>';
+				else echo '<p style="margin-top:50px;text-align:center;color:#660000;">There has been an error adding '.$element.'. The most common error is two rows named the same.</p>';
+				mysqli_close($mysqli);
 				if(count($results) > 1) {
 					$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
 					foreach($this->_tablesArray[$key] as $row => $value) if($row == "tablename") { } else array_push($argsArray, $value);
@@ -125,47 +132,69 @@ class Arm {
 			$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
 			foreach($this->_tablesArray[$key] as $row => $value) if($row == "tablename") { } else array_push($argsArray, $value);
 			$results = array_diff($databaseArray, $argsArray);
+			echo '<pre>'; print_r($databaseArray); print_r($argsArray); print_r($results); echo '</pre>';
 			foreach($results as $idx => $element) {
-				$args = explode("_", $element);
-				if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
 				$queryString = "ALTER TABLE ".$this->_tablesArray[$key]['tablename']." DROP ".$element;
 				$mysqli = $this->_Connect();
-				$query = mysqli_query($mysqli, $queryString);  mysqli_close($mysqli);
+				$query = mysqli_query($mysqli, $queryString);
+				if($query) echo '<p style="margin-top:50px;text-align:center;color:#006600;">The row '.$element.' has been dropped successfully!</p>';
+				else echo '<p style="margin-top:50px;text-align:center;color:#660000;">There has been an error dropping '.$element.'.</p>';
+				mysqli_close($mysqli);
 			}
 		}
 	}
 	
 	protected function _RenameRow($tablename, $dbArrayVal, $dbVal) {
 		$mysqli = $this->_Connect();
-		$queryString = "ALTER TABLE ".$tablename." CHANGE COLUMN ".$dbVal." ".$dbArrayVal." VARCHAR(255)";
+		$args = explode("_", $dbArrayVal);
+		if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
+		$queryString = "ALTER TABLE ".$tablename." CHANGE COLUMN ".$dbVal." ".$dbArrayVal." ".$args[2].$chars;
 		//echo $queryString;
-		$query = mysqli_query($mysqli, $queryString); mysqli_close($mysqli);
+		$query = mysqli_query($mysqli, $queryString);
+		if($query) echo '<p style="margin-top:50px;text-align:center;color:#006600;">The row '.$dbVal.' has been changed to '.$dbArrayVal.' successfully!</p>';
+		//else echo '<p style="margin-top:50px;text-align:center;color:#660000;">There has been an error changing '.$dbVal.' to '.$dbArrayVal.'.</p>';
+		mysqli_close($mysqli);
 	}
 	
-	protected function ArmCheckTables() {
+	protected function _CheckForSameName($tablename, $arrayArgs) {
+		$count = 0;
+		foreach($arrayArgs as $value) {
+			//echo $value .", ". $tablename ."<br />";
+			if($tablename == $value) $count++;
+			if($tablename == $value && $count == 2) {
+				echo '<p style="margin-top:50px;text-align:center;color:#f00;">There has been an error adding '.$tablename.'. Two tables can not have the same name.</p>';
+				die(); return true;
+			}
+		}
+		return false;
+	}
+	
+	public function ArmCheckTables() {
 		$dbArgs = $this->_GetListOfTablesDatabase();
 		$arrayArgs = $this->_GetListOfTablesArm();
 		//echo '<pre>'; print_r($dbArgs); print_r($arrayArgs); echo '</pre>';
 		if(count($dbArgs) == count($arrayArgs) || count($dbArgs) < count($arrayArgs)) {
 			foreach($this->_tablesArray as $key => $value) {
 				if($this->_TableExists($this->_tablesArray[$key]['tablename'])) {
-					$tablename = $this->_tablesArray[$key]['tablename'];
-					$mysqli = $this->_Connect(); $query = mysqli_query($mysqli, "SELECT * FROM ".$tablename);
-					$numFields = mysqli_num_fields($query); mysqli_close($mysqli);
-					//echo $numFields.", ".(count($this->_tablesArray[$key])-1)."<br />";
-					if($numFields < (count($this->_tablesArray[$key])-1)) $string = $this->_ResolveDifference($key, 1);
-					if($numFields > (count($this->_tablesArray[$key])-1)) $string = $this->_ResolveDifference($key, 0);
-					if(isset($string) && $string != '') $this->_ArmAlterTable($tablename, $string);
-					
-					$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
-					foreach($this->_tablesArray[$key] as $row => $value) if($row != "tablename") array_push($argsArray, $value);
-					for($i=0; $i<count($argsArray); $i++) {
-						//echo $argsArray[$i] .", ". $databaseArray[$i] ."<br />";
-						if($argsArray[$i] != $databaseArray[$i]) {
-							$this->_RenameRow($tablename, $argsArray[$i], $databaseArray[$i]);
+					if($this->_CheckForSameName($this->_tablesArray[$key]['tablename'], $arrayArgs) == false) {
+						$tablename = $this->_tablesArray[$key]['tablename'];
+						$mysqli = $this->_Connect(); $query = mysqli_query($mysqli, "SELECT * FROM ".$tablename);
+						$numFields = mysqli_num_fields($query); mysqli_close($mysqli);
+						//echo $numFields.", ".(count($this->_tablesArray[$key])-1)."<br />";
+						if($numFields < (count($this->_tablesArray[$key])-1)) $string = $this->_ResolveDifference($key, 1);
+						if($numFields > (count($this->_tablesArray[$key])-1)) $string = $this->_ResolveDifference($key, 0);
+						if(isset($string) && $string != '') $this->_ArmAlterTable($tablename, $string);
+						
+						$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
+						foreach($this->_tablesArray[$key] as $row => $value) if($row != "tablename") array_push($argsArray, $value);
+						for($i=0; $i<count($argsArray); $i++) {
+							//echo $argsArray[$i] .", ". $databaseArray[$i] ."<br />";
+							if($argsArray[$i] != $databaseArray[$i]) {
+								$this->_RenameRow($tablename, $argsArray[$i], $databaseArray[$i]);
+							}
 						}
+						//echo '<pre>'; print_r($databaseArray); print_r($argsArray); echo '</pre>';
 					}
-					//echo '<pre>'; print_r($databaseArray); print_r($argsArray); echo '</pre>';
 				} else {
 					$this->_ArmCreateNewTable($this->_tablesArray[$key]);
 					//$this->_CreateCIMettaFields();
@@ -175,7 +204,10 @@ class Arm {
 			$results = array_diff($dbArgs, $arrayArgs);
 			foreach($results as $table) {
 				$mysqli = $this->_Connect();
-				$query = mysqli_query($mysqli, "DROP TABLE IF EXISTS ".$table);  mysqli_close($mysqli);
+				$query = mysqli_query($mysqli, "DROP TABLE IF EXISTS ".$table);
+				if($query) echo '<p style="margin-top:50px;text-align:center;color:#006600;">The table '.$table.' has been dropped successfully!</p>';
+				else echo '<p style="margin-top:50px;text-align:center;color:#660000;">There has been an error dropping '.$table.'.</p>';
+				mysqli_close($mysqli);
 			}
 			//echo '<pre>'; print_r($dbArgs); print_r($arrayArgs); print_r($results); echo '</pre>';
 		}
