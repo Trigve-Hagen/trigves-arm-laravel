@@ -7,7 +7,7 @@ YOU REALLY HAVE TO WATCH WHEN YOU ARE CREATING YOUR TABLES AND FIELDS
 * NAMING TWO TABLES THE SAME WILL HALT EXECUTION AND CREATE AN ERROR  
 * NO TWO TABLES CAN HAVE THE SAME NAME  
 
-Due to adding new features to the class last week Im running into new errors. Please give me while to finish edits. Your still welcome to tinker with it though. One new error may erase extra databases so be careful. The other; cause the function checks the count of each table overlooks changes if you erase a row and replace it with another in one refresh. A change like that needs to be done one at a time for the moment. Since I'm fixing that I will add support for changing names. Thanks.
+Due to adding new features to the class last week I was running into new errors. When debbugging I realized the new error was not a new error at all but this. If you had named two databases the same they would both be erased. I added new logic for reporting the error. Will uploading it soon. I am also adding logic to report having two rows with the same name. Be back in a minute. Happy Coding!!  
 
 INSTALLATION  
 1) Place Development folder in the app directory.  
