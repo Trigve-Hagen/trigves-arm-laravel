@@ -65,7 +65,7 @@ class Arm {
 		$result = mysqli_query($mysqli, "select 1 from `" . $table . "` LIMIT 1");
 		if($result) return true; else return false;
 	}
-
+	
 	// SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'
 	private function _GetListOfTablesDatabase() {
 		$mysqli = $this->_Connect(); $argsArray = array();
@@ -79,7 +79,6 @@ class Arm {
 		foreach($this->_tablesArray as $table => $rows) array_push($argsArray, $rows['tablename']);
 		sort($argsArray); return $argsArray;
 	}
-
 	private function _GetListOfDatabases($key) {
 		$mysqli = $this->_Connect(); $argsArray = array();
 		$query = mysqli_query($mysqli, "DESCRIBE ".$this->_tablesArray[$key]['tablename']);
@@ -134,10 +133,16 @@ class Arm {
 				$query = mysqli_query($mysqli, $queryString);  mysqli_close($mysqli);
 			}
 		}
-		
 	}
 	
-	public function ArmCheckTables() {
+	protected function _RenameRow($tablename, $dbArrayVal, $dbVal) {
+		$mysqli = $this->_Connect();
+		$queryString = "ALTER TABLE ".$tablename." CHANGE COLUMN ".$dbVal." ".$dbArrayVal." VARCHAR(255)";
+		//echo $queryString;
+		$query = mysqli_query($mysqli, $queryString); mysqli_close($mysqli);
+	}
+	
+	protected function ArmCheckTables() {
 		$dbArgs = $this->_GetListOfTablesDatabase();
 		$arrayArgs = $this->_GetListOfTablesArm();
 		//echo '<pre>'; print_r($dbArgs); print_r($arrayArgs); echo '</pre>';
@@ -145,12 +150,22 @@ class Arm {
 			foreach($this->_tablesArray as $key => $value) {
 				if($this->_TableExists($this->_tablesArray[$key]['tablename'])) {
 					$tablename = $this->_tablesArray[$key]['tablename'];
-					$mysqli = $this->_Connect();
-					$query = mysqli_query($mysqli, "SELECT * FROM ".$this->_tablesArray[$key]['tablename']);
-					$numFields = mysqli_num_fields($query);
-					if($numFields < count($this->_tablesArray[$key])-1) $string = $this->_ResolveDifference($key, 1);
-					if($numFields > count($this->_tablesArray[$key])-1) $string = $this->_ResolveDifference($key, 0);
-					if(isset($string)) $this->_ArmAlterTable($tablename, $string);
+					$mysqli = $this->_Connect(); $query = mysqli_query($mysqli, "SELECT * FROM ".$tablename);
+					$numFields = mysqli_num_fields($query); mysqli_close($mysqli);
+					//echo $numFields.", ".(count($this->_tablesArray[$key])-1)."<br />";
+					if($numFields < (count($this->_tablesArray[$key])-1)) $string = $this->_ResolveDifference($key, 1);
+					if($numFields > (count($this->_tablesArray[$key])-1)) $string = $this->_ResolveDifference($key, 0);
+					if(isset($string) && $string != '') $this->_ArmAlterTable($tablename, $string);
+					
+					$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
+					foreach($this->_tablesArray[$key] as $row => $value) if($row != "tablename") array_push($argsArray, $value);
+					for($i=0; $i<count($argsArray); $i++) {
+						//echo $argsArray[$i] .", ". $databaseArray[$i] ."<br />";
+						if($argsArray[$i] != $databaseArray[$i]) {
+							$this->_RenameRow($tablename, $argsArray[$i], $databaseArray[$i]);
+						}
+					}
+					//echo '<pre>'; print_r($databaseArray); print_r($argsArray); echo '</pre>';
 				} else {
 					$this->_ArmCreateNewTable($this->_tablesArray[$key]);
 					//$this->_CreateCIMettaFields();
