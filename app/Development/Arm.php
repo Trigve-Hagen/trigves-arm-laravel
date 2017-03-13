@@ -75,14 +75,15 @@ class Arm {
 	private function _GetListOfTablesDatabase() {
 		$mysqli = $this->_Connect(); $argsArray = array();
 		$query = mysqli_query($mysqli, "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'");
-		while ($line = mysqli_fetch_array($query)) if($line[1] == $this->_db_name) array_push($argsArray, htmlentities($line['TABLE_NAME']));
+		while ($line = mysqli_fetch_array($query)) if($line[1] == $this->_db_name) array_push($argsArray, htmlentities($line['TABLE_NAME'])); 
 		return $argsArray;
 	}
 	
 	private function _GetListOfTablesArm() {
 		$argsArray = array();
 		foreach($this->_tablesArray as $table => $rows) array_push($argsArray, $rows['tablename']);
-		sort($argsArray); return $argsArray;
+		//echo '<pre>' . print_r($argsArray) . '</pre>';
+		return $argsArray;
 	}
 	private function _GetListOfDatabases($key) {
 		$mysqli = $this->_Connect(); $argsArray = array();
@@ -148,8 +149,9 @@ class Arm {
 	protected function _RenameRow($tablename, $dbArrayVal, $dbVal) {
 		$mysqli = $this->_Connect();
 		$args = explode("_", $dbArrayVal);
+		if(isset($args[2])) $type = $args[2]; else $type = "";
 		if(isset($args[3])) $chars = "(" . $args[3] . ")"; else $chars = "";
-		$queryString = "ALTER TABLE ".$tablename." CHANGE COLUMN ".$dbVal." ".$dbArrayVal." ".$args[2].$chars;
+		$queryString = "ALTER TABLE ".$tablename." CHANGE COLUMN ".$dbVal." ".$dbArrayVal." ".$type.$chars;
 		//echo $queryString;
 		$query = mysqli_query($mysqli, $queryString);
 		if($query) echo '<p style="margin-top:50px;text-align:center;color:#006600;">The row '.$dbVal.' has been changed to '.$dbArrayVal.' successfully!</p>';
@@ -170,7 +172,7 @@ class Arm {
 		return false;
 	}
 	
-	public function ArmCheckTables() {
+	protected function ArmCheckTables() {
 		$dbArgs = $this->_GetListOfTablesDatabase();
 		$arrayArgs = $this->_GetListOfTablesArm();
 		//echo '<pre>'; print_r($dbArgs); print_r($arrayArgs); echo '</pre>';
@@ -202,15 +204,16 @@ class Arm {
 				}
 			}
 		} else {
-			$results = array_diff($dbArgs, $arrayArgs);
-			foreach($results as $table) {
-				$mysqli = $this->_Connect();
-				$query = mysqli_query($mysqli, "DROP TABLE IF EXISTS ".$table);
-				if($query) echo '<p style="margin-top:50px;text-align:center;color:#006600;">The table '.$table.' has been dropped successfully!</p>';
-				else echo '<p style="margin-top:50px;text-align:center;color:#660000;">There has been an error dropping '.$table.'.</p>';
-				mysqli_close($mysqli);
+			foreach($dbArgs as $table) { // $arrayArgs - arm array
+				if(!in_array($table, $arrayArgs)) {
+					$mysqli = $this->_Connect();
+					$query = mysqli_query($mysqli, "DROP TABLE IF EXISTS ".$table);
+					if($query) echo '<p style="margin-top:50px;text-align:center;color:#006600;">The table '.$table.' has been dropped successfully!</p>';
+					else echo '<p style="margin-top:50px;text-align:center;color:#660000;">There has been an error dropping '.$table.'.</p>';
+					mysqli_close($mysqli);
+				}
 			}
-			//echo '<pre>'; print_r($dbArgs); print_r($arrayArgs); print_r($results); echo '</pre>';
+			//echo '<pre>'; print_r($dbArgs); print_r($arrayArgs); echo '</pre>';
 		}
 	}
 }
