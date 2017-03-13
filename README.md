@@ -6,8 +6,10 @@ YOU REALLY HAVE TO WATCH WHEN YOU ARE CREATING YOUR TABLES AND FIELDS
 * NO TWO FIELDS IN A TABLE CAN HAVE THE SAME NAME  
 * NAMING TWO TABLES THE SAME WILL HALT EXECUTION AND CREATE AN ERROR  
 * NO TWO TABLES CAN HAVE THE SAME NAME  
+* SQL DATABASE NAMES ARE TURNED TO ALL LOWER CASE SO ONLY USE LOWER CASE CHARACTERS IN THE fIRST TWO SECTIONS OF THE NAMES
+* THE DATABASE WILL TURN THE UPPERCASES TO LOWER CASES AND YOUR ARRAY WON'T MATCH THE DATABASES
 
-* STILL ERRORING on localhost when there are two databses only and you delete one. Sometimes both are deleted. Im working on a fix.
+* IT WAS ERRORING ON LOCALHOST BECAUSE I HAD NAMES INCLUDING UPPER CASE CHARACTERS. WHEN IT CREATED THE DATABASES IT TURNED THEM TO LOWER CASE. THEN WHEN I CHECKED MY ARRAY(UPPER CASE) AGAINST THE DATABASE ARRAY(LOWWER CASE) OF NAMES IT RETURNED NOT IN THE ARRAY AND DELETED THEM BOTH. - users_c3p0r2d2007OG - has to be users_c3p0r2d2007og - ALL LOWER CASE. NAMES ONLY. ROWS NAMES CAN HAVE BOTH(UPPER AND LOWER CASE CHARACTERS)
 
 Due to adding new features to the class last week I was running into new errors. When debbugging I realized the new error was not a new error at all but this. If you had named two databases the same they would both be erased when dropping a table. I added new logic for reporting the error. I also adding logic to report having two rows with the same name and errors and messages for everything else. PLease be carefull anyways. I take no responsibility for lost data! Use at your risk. If I have no new problems to report in the next month of developing with it than it is done. Happy Coding!!  
 
