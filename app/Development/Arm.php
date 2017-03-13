@@ -16,6 +16,7 @@ class Arm {
 	}
 	
 	/*
+	* I take no responsibility for lost data! Use at your risk.
 	* tablename and id INT NOT NULL AUTO_INCREMENT are manditory unless you want to adjust it
 	* You can name the sections separated by the underscore anything - 'id'=>'blogid_45g234y5g5y' or 'id'=>'userid_rewquy3o45ouy'
 	* The next two fields after tablename and id are optional. They are
