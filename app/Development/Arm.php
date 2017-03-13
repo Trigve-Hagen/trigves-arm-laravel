@@ -132,7 +132,7 @@ class Arm {
 			$databaseArray = $this->_GetListOfDatabases($key); $argsArray = array();
 			foreach($this->_tablesArray[$key] as $row => $value) if($row == "tablename") { } else array_push($argsArray, $value);
 			$results = array_diff($databaseArray, $argsArray);
-			echo '<pre>'; print_r($databaseArray); print_r($argsArray); print_r($results); echo '</pre>';
+			//echo '<pre>'; print_r($databaseArray); print_r($argsArray); print_r($results); echo '</pre>';
 			foreach($results as $idx => $element) {
 				$queryString = "ALTER TABLE ".$this->_tablesArray[$key]['tablename']." DROP ".$element;
 				$mysqli = $this->_Connect();
