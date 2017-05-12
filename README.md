@@ -5,7 +5,6 @@ YOU REALLY HAVE TO WATCH WHEN YOU ARE CREATING YOUR TABLES AND FIELDS
 * WHEN FIRST PUT INTO USE IT WILL ERASE ANYTHING DONE BEFORE IT AND CREATE A SAMPLE USER DATABASE
 * NAMING TWO ROWS THE SAME WILL HALT EXECUTION AND CREATE AN ERROR  
 * NAMING TWO TABLES THE SAME WILL HALT EXECUTION AND CREATE AN ERROR   
-* SQL DATABASE NAMES ARE TURNED TO ALL LOWER CASE SO ONLY USE LOWER CASE CHARACTERS IN THE NAMES UNLESS WHERE UPPER CASE IS USED  
 * STICK TO LOWER CASE IN THE SECTIONS THAT HAVE LOWER CASE AND ONLY USE UPPER CASE WHEN TYPING THE ROW  
 
 I take no responsibility for lost data! Use at your risk. Happy Coding!!  
@@ -18,7 +17,8 @@ INSTALLATION
 5) Create the table in phpmyadmin and fill in your .env variables.  
 
 -- or --  
-1) Go to root of Laravel Installation and run composer require trigves/arm
+1) Go to root of Laravel Installation and run composer require trigves/arm  
+2) Publish and adjust the tablesArray in Arm.php  
 
 
 3/10/2017 - updates  
